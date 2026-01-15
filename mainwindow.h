@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include "src/phonebook.h"
+#include "src/db.h"
+
 #include <unordered_map>
 #include <string>
 
@@ -21,15 +23,21 @@ public:
 private slots:
     void on_btnadd_clicked();
     void on_btnedit_clicked();
-    void on_btnrem_clicked();
+
+    void on_btndel_clicked();
+
     void on_btnload_clicked();
     void on_btnsave_clicked();
     void on_btnsearch_clicked();
     void on_btnreset_clicked();
 
+    void on_btnSaveDb_clicked();
+    void on_btnLoadDb_clicked();
+
 private:
     Ui::MainWindow *ui;
     Phonebook m_book;
+    DbStorage m_db;
 
     void refreshTable();
     int selectedContactIndex() const;

@@ -15,6 +15,8 @@ qt_add_executable(qttrip2
     src/phonebook.cpp
     src/contactdialog.h src/contactdialog.cpp
     src/searchdialog.h src/searchdialog.cpp
+    src/db.h src/db.cpp
+
 )
 
 target_include_directories(qttrip2 PRIVATE src)

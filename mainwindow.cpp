@@ -5,11 +5,15 @@
 #include <QMessageBox>
 #include <QTableWidgetItem>
 #include <QStatusBar>
+#include <QHeaderView>
+
+#include <QtSql/QSqlDatabase>
 
 #include "src/contactdialog.h"
 #include "src/searchdialog.h"
 
 #include <cctype>
+#include <vector>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,10 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
     auto header = ui->tableContacts->horizontalHeader();
 
     header->setStretchLastSection(false);
-
     header->setSectionResizeMode(QHeaderView::Fixed);
-
     header->setMinimumSectionSize(80);
+    header->setSectionsMovable(false);
 
     setStyleSheet(R"(
 
@@ -174,6 +177,7 @@ MainWindow::MainWindow(QWidget *parent)
     )");
 
     ui->tableContacts->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
     ui->tableContacts->setColumnWidth(0, 110);
     ui->tableContacts->setColumnWidth(1, 110);
     ui->tableContacts->setColumnWidth(2, 120);
@@ -181,17 +185,19 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableContacts->setColumnWidth(4, 130);
     ui->tableContacts->setColumnWidth(5, 110);
     ui->tableContacts->setColumnWidth(6, 170);
-
+    // --------------------------------------------------------
 
     setWindowTitle(QStringLiteral("Телефонный справочник"));
     setFixedSize(size());
 
-    ui->btnLoadDb->setEnabled(false);
-    ui->btnSaveDb->setEnabled(false);
+    const bool hasPgDriver = QSqlDatabase::isDriverAvailable("QPSQL");
+    ui->btnLoadDb->setEnabled(hasPgDriver);
+    ui->btnSaveDb->setEnabled(hasPgDriver);
 
     ui->tableContacts->setSortingEnabled(true);
 
-    statusBar()->showMessage("Ready");
+    statusBar()->showMessage(hasPgDriver ? "Ready"
+                                         : "QPSQL driver not available (PostgreSQL driver for Qt is missing)");
 }
 
 MainWindow::~MainWindow()
@@ -320,7 +326,8 @@ void MainWindow::on_btnedit_clicked()
     }
 }
 
-void MainWindow::on_btnrem_clicked()
+
+void MainWindow::on_btndel_clicked()
 {
     const int idx = selectedContactIndex();
     if (idx < 0) {
@@ -398,4 +405,51 @@ void MainWindow::on_btnreset_clicked()
         ui->tableContacts->setRowHidden(row, false);
 
     statusBar()->showMessage("Filter reset");
+}
+
+
+void MainWindow::on_btnSaveDb_clicked()
+{
+    if (m_book.contacts().empty()) {
+        QMessageBox::information(this, "DB", "Nothing to save: contact list is empty.");
+        return;
+    }
+
+    QString err;
+    if (!m_db.ensureOpen(this, &err)) {
+        QMessageBox::warning(this, "DB", err);
+        return;
+    }
+
+    if (!m_db.saveAll(m_book.contacts(), &err)) {
+        QMessageBox::critical(this, "DB", err);
+        return;
+    }
+
+    statusBar()->showMessage("Saved to PostgreSQL");
+    QMessageBox::information(this, "DB", "Saved to PostgreSQL.");
+}
+
+void MainWindow::on_btnLoadDb_clicked()
+{
+    QString err;
+    if (!m_db.ensureOpen(this, &err)) {
+        QMessageBox::warning(this, "DB", err);
+        return;
+    }
+
+    std::vector<Contact> loaded;
+    if (!m_db.loadAll(loaded, &err)) {
+        QMessageBox::critical(this, "DB", err);
+        return;
+    }
+
+    m_book.clear();
+    for (const auto& c : loaded) {
+        m_book.add(c);
+    }
+
+    refreshTable();
+    statusBar()->showMessage("Loaded from PostgreSQL");
+    QMessageBox::information(this, "DB", QString("Loaded from PostgreSQL: %1").arg((int)loaded.size()));
 }

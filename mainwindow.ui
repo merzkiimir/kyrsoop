@@ -57,28 +57,28 @@
        <item>
         <widget class="QPushButton" name="btnload">
          <property name="text">
-          <string>loadfromfile</string>
+          <string>load file</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnsave">
          <property name="text">
-          <string>savetofile</string>
+          <string>save file</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnLoadDb">
          <property name="text">
-          <string>loadfromdb</string>
+          <string>load db</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnSaveDb">
          <property name="text">
-          <string>savetodb</string>
+          <string>save db</string>
          </property>
         </widget>
        </item>
